@@ -1,13 +1,14 @@
 package main
 
 import (
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func Test_fizzbuzz_3_5_until_100(t *testing.T) {
-	a := fizzbuzzParameters{100,3,5,"Fizz","Buzz"}
-	expected:=[]string{
+	arg := fbparams{100, 3, 5, "Fizz", "Buzz"}
+	expected := []string{
 		"1",
 		"2",
 		"Fizz",
@@ -109,5 +110,12 @@ func Test_fizzbuzz_3_5_until_100(t *testing.T) {
 		"Fizz",
 		"Buzz",
 	}
-	assert.Equal(t, expected, (fizzbuzz(a)))
+	actual, _ := fizzbuzz(arg)
+	assert.Equal(t, expected, actual)
+}
+
+func Test_fizzbuzz_0_as_int(t *testing.T) {
+	arg := fbparams{100, 0, 5, "Fizz", "Buzz"}
+	_, err := fizzbuzz(arg)
+	assert.Error(t, errors.New("No multiples of 0"), err)
 }

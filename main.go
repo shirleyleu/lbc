@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -18,18 +17,15 @@ type fbparams struct {
 }
 
 func fizzbuzz(p fbparams) ([]string, error) {
-	// Reject 0 as
-	if p.Int1 == 0 || p.Int2 == 0 {
-		return nil, errors.New("No multiples of 0")
-	}
 	var s []string
 	for i := 1; i <= p.Limit; i++ {
 		switch {
-		case i%(p.Int1*p.Int2) == 0:
+		// 0 is a valid integer and nothing is a multiple of 0
+		case p.Int1 != 0 && p.Int2 != 0 && i%(p.Int1*p.Int2) == 0:
 			s = append(s, p.String1+p.String2)
-		case i%p.Int1 == 0:
+		case p.Int1 != 0 && i%p.Int1 == 0:
 			s = append(s, p.String1)
-		case i%p.Int2 == 0:
+		case p.Int2 != 0 && i%p.Int2 == 0:
 			s = append(s, p.String2)
 		default:
 			s = append(s, fmt.Sprintf("%d", i))
@@ -56,7 +52,7 @@ func (h tigerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Construct fizzbuzz output
 	result, err := fizzbuzz(m)
 	if err != nil {
-		http.Error(w, "No multiples of 0", http.StatusBadRequest)
+		http.Error(w, "Int1 and Int2 cannot be 0", http.StatusBadRequest)
 		return
 	}
 

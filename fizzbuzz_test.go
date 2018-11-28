@@ -6,7 +6,7 @@ import (
 )
 
 func Test_fizzbuzz_3_5_until_100(t *testing.T) {
-	arg := fbparams{100, 3, 5, "Fizz", "Buzz"}
+	arg := fbParams{100, 3, 5, "Fizz", "Buzz"}
 	expected := []string{
 		"1",
 		"2",
@@ -114,28 +114,28 @@ func Test_fizzbuzz_3_5_until_100(t *testing.T) {
 }
 
 func Test_fizzbuzz_0_as_int1(t *testing.T) {
-	arg := fbparams{5, 0, 2, "Fizz", "Buzz"}
+	arg := fbParams{5, 0, 2, "Fizz", "Buzz"}
 	expected := []string{"1", "Buzz", "3", "Buzz", "5"}
 	actual := fizzbuzz(arg)
 	assert.Equal(t, expected, actual)
 }
 
 func Test_fizzbuzz_0_as_int2(t *testing.T) {
-	arg := fbparams{5, 2, 0, "Fizz", "Buzz"}
+	arg := fbParams{5, 2, 0, "Fizz", "Buzz"}
 	expected := []string{"1", "Fizz", "3", "Fizz", "5"}
 	actual := fizzbuzz(arg)
 	assert.Equal(t, expected, actual)
 }
 
 func Test_fizzbuzz_negative_numbers(t *testing.T) {
-	arg := fbparams{10, -2, -5, "Fizz", "Buzz"}
+	arg := fbParams{10, -2, -5, "Fizz", "Buzz"}
 	expected := []string{"1", "Fizz", "3", "Fizz", "Buzz", "Fizz", "7", "Fizz", "9", "FizzBuzz"}
 	actual := fizzbuzz(arg)
 	assert.Equal(t, expected, actual)
 }
 
 func Test_fizzbuzz_limit_0(t *testing.T) {
-	arg := fbparams{0, 1, 7, "Fizz", "Buzz"}
+	arg := fbParams{0, 1, 7, "Fizz", "Buzz"}
 	actual := fizzbuzz(arg)
 	assert.Nil(t, actual)
 }

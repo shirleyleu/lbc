@@ -2,7 +2,7 @@ package main
 
 import "fmt"
 
-type fbparams struct {
+type fbParams struct {
 	Limit   int    `json:"limit"`
 	Int1    int    `json:"int1"`
 	Int2    int    `json:"int2"`
@@ -13,7 +13,7 @@ type fbparams struct {
 // Function fizzbuzz returns a list of strings with numbers from 1 to limit where all
 // multiples of int1 are replaced by str1, all multiples of int2 are replaced by str2,
 // all multiples of int1 and int2 are replaced by str1str2.
-func fizzbuzz(p fbparams) []string {
+func fizzbuzz(p fbParams) []string {
 	var s []string
 	for i := 1; i <= p.Limit; i++ {
 		switch {

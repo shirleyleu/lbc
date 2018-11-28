@@ -16,7 +16,7 @@ type fbparams struct {
 	String2 string `json:"string2"`
 }
 
-func fizzbuzz(p fbparams) ([]string, error) {
+func fizzbuzz(p fbparams) []string {
 	var s []string
 	for i := 1; i <= p.Limit; i++ {
 		switch {
@@ -31,7 +31,7 @@ func fizzbuzz(p fbparams) ([]string, error) {
 			s = append(s, fmt.Sprintf("%d", i))
 		}
 	}
-	return s, nil
+	return s
 }
 
 type tigerHandler struct{}
@@ -48,22 +48,14 @@ func (h tigerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Error parsing JSON: %s", err), http.StatusBadRequest)
 		return
 	}
-
-	// Construct fizzbuzz output
-	result, err := fizzbuzz(m)
-	if err != nil {
-		http.Error(w, "Int1 and Int2 cannot be 0", http.StatusBadRequest)
-		return
-	}
-
-	// Send back response as JSON
-	resultJSON, err := json.Marshal(result)
+	// Construct fizzbuzz output and send back response as JSON
+	result, err := json.Marshal(fizzbuzz(m))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error constructing JSON response: %s", err), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(resultJSON)
+	_, err = w.Write(result)
 	if err != nil {
 		log.Printf("Error writing response to header: %s", err)
 	}

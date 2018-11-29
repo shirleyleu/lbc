@@ -13,16 +13,12 @@ type statHandler struct {
 }
 
 func (h statHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Convert map to a slice
-	slice := mapToSlice(h.m)
-	// Isolate the request(s) with the highest count
-	highestRequest := highestCount(slice)
+	// Convert map to a slice and isolate the request(s) with the highest count
+	slice := highestCount(h.m)
 
-	slice2 := highestCount2(h.m)
-
-	if len(highestRequest) != 0 {
+	if len(slice) != 0 {
 		// Respond with parameters and number of times requested
-		result, err := json.Marshal(slice2)
+		result, err := json.Marshal(slice)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Error constructing JSON response: %s", err), http.StatusInternalServerError)
 			return
@@ -43,27 +39,7 @@ type fbCount struct {
 	Count      int      `json:"count"`
 }
 
-func mapToSlice(m map[fbParams]int) []fbCount {
-	var slice []fbCount
-	for k, v := range m {
-		slice = append(slice, fbCount{k, v})
-	}
-	return slice
-}
-
-func highestCount(s []fbCount) []fbCount {
-	highestParamsCounts := []fbCount{}
-	count := 0
-	for _, v := range s {
-		if v.Count >= count {
-			count = v.Count
-			highestParamsCounts = append(highestParamsCounts, v)
-		}
-	}
-	return highestParamsCounts
-}
-
-func highestCount2(m map[fbParams]int) []fbCount {
+func highestCount(m map[fbParams]int) []fbCount {
 	var s []fbCount
 	for k, v := range m {
 		s = append(s, fbCount{k, v})

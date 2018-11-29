@@ -3,13 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
-	"sync"
 )
-
-type safeCounter struct {
-	m   map[fbParams]int
-	mux sync.Mutex
-}
 
 func main() {
 	var c safeCounter

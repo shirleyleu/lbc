@@ -6,30 +6,35 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"sync"
 )
 
-type statHandler struct {
-	c *safeCounter
+type safeCounter struct {
+	m   map[fbParams]int
+	mux sync.Mutex
 }
 
 func (c *safeCounter) Inc(key fbParams) {
 	c.mux.Lock()
-	// Lock so only one goroutine at a time can access the map c.m
+	defer c.mux.Unlock()
 	c.m[key]++
-	c.mux.Unlock()
 }
 
-func (c *safeCounter) highestCount(m map[fbParams]int) []fbCount {
+func (c *safeCounter) highestCount() []fbCount {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	var s []fbCount
-	for k, v := range m {
+	for k, v := range c.m {
 		s = append(s, fbCount{k, v})
 	}
 	highestParamsCounts := []fbCount{}
 	count := 0
 	for _, v := range s {
-		if v.Count >= count {
+		switch {
+		case v.Count > count:
+			count = v.Count
+			highestParamsCounts = []fbCount{v}
+		case v.Count == count:
 			count = v.Count
 			highestParamsCounts = append(highestParamsCounts, v)
 		}
@@ -37,9 +42,13 @@ func (c *safeCounter) highestCount(m map[fbParams]int) []fbCount {
 	return highestParamsCounts
 }
 
+type statHandler struct {
+	c *safeCounter
+}
+
 func (h statHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Convert map to a slice and isolate the request(s) with the highest count
-	slice := h.c.highestCount(h.c.m)
+	slice := h.c.highestCount()
 	// If no requests were made to fizzbuzz, return a http 204 No Content
 	if len(slice) == 0 {
 		w.WriteHeader(http.StatusNoContent)

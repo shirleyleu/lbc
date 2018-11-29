@@ -15,23 +15,23 @@ type statHandler struct {
 func (h statHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Convert map to a slice and isolate the request(s) with the highest count
 	slice := highestCount(h.m)
-
-	if len(slice) != 0 {
-		// Respond with parameters and number of times requested
-		result, err := json.Marshal(slice)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Error constructing JSON response: %s", err), http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		_, err = w.Write(result)
-		if err != nil {
-			log.Printf("Error writing response to header: %s", err)
-			return
-		}
-	}
 	// If no requests were made to fizzbuzz, return a http 204 No Content
-	w.WriteHeader(http.StatusNoContent)
+	if len(slice) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	// Else, respond with parameters and number of times requested
+	result, err := json.Marshal(slice)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error constructing JSON response: %s", err), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(result)
+	if err != nil {
+		log.Printf("Error writing response to header: %s", err)
+		return
+	}
 }
 
 type fbCount struct {

@@ -1,20 +1,21 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
+	"sync"
 )
 
-func homeHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Check out the /statistics endpoint")
+type safeCounter struct {
+	m   map[fbParams]int
+	mux sync.Mutex
 }
 
 func main() {
-	var m = make(map[fbParams]int)
-	http.HandleFunc("/", homeHandler)
-	http.Handle("/fizzbuzz", fbHandler{m})
-	http.Handle("/statistics", statHandler{m})
+	var c safeCounter
+	c.m = make(map[fbParams]int)
+	http.Handle("/fizzbuzz", fbHandler{&c})
+	http.Handle("/statistics", statHandler{&c})
 	log.Print("Listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

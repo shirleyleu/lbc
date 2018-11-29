@@ -6,34 +6,36 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"sort"
 )
-
-type fbHandler struct {
-	m map[fbParams]int
-}
 
 type statHandler struct {
 	m map[fbParams]int
 }
 
 func (h statHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Sort map
-	slice := sortMap(h.m)
+	// Convert map to a slice
+	slice := mapToSlice(h.m)
+	// Isolate the request(s) with the highest count
+	highestRequest := highestCount(slice)
 
-	// Response with parameters and number of times requested
-	result, err := json.Marshal(slice)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error constructing JSON response: %s", err), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(result)
-	if err != nil {
-		log.Printf("Error writing response to header: %s", err)
-		return
-	}
+	slice2 := highestCount2(h.m)
 
+	if len(highestRequest) != 0 {
+		// Respond with parameters and number of times requested
+		result, err := json.Marshal(slice2)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Error constructing JSON response: %s", err), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, err = w.Write(result)
+		if err != nil {
+			log.Printf("Error writing response to header: %s", err)
+			return
+		}
+	}
+	// If no requests were made to fizzbuzz, return a http 204 No Content
+	w.WriteHeader(http.StatusNoContent)
 }
 
 type fbCount struct {
@@ -41,15 +43,44 @@ type fbCount struct {
 	Count      int      `json:"count"`
 }
 
-func sortMap(m map[fbParams]int) []fbCount {
+func mapToSlice(m map[fbParams]int) []fbCount {
 	var slice []fbCount
 	for k, v := range m {
 		slice = append(slice, fbCount{k, v})
 	}
-	sort.Slice(slice, func(i, j int) bool {
-		return slice[i].Count > slice[j].Count
-	})
 	return slice
+}
+
+func highestCount(s []fbCount) []fbCount {
+	highestParamsCounts := []fbCount{}
+	count := 0
+	for _, v := range s {
+		if v.Count >= count {
+			count = v.Count
+			highestParamsCounts = append(highestParamsCounts, v)
+		}
+	}
+	return highestParamsCounts
+}
+
+func highestCount2(m map[fbParams]int) []fbCount {
+	var s []fbCount
+	for k, v := range m {
+		s = append(s, fbCount{k, v})
+	}
+	highestParamsCounts := []fbCount{}
+	count := 0
+	for _, v := range s {
+		if v.Count >= count {
+			count = v.Count
+			highestParamsCounts = append(highestParamsCounts, v)
+		}
+	}
+	return highestParamsCounts
+}
+
+type fbHandler struct {
+	m map[fbParams]int
 }
 
 func (h fbHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

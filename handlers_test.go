@@ -111,38 +111,51 @@ func TestHighestCount__when_two_are_tied_for_highest_returns_both(t *testing.T) 
 		{Parameters: fbParams{10, 1, 2, "Dustin", "Moose"}, Count: 5}}, slice)
 }
 
-//func TestSafeCounter_increments_after_posting_to_fbHandler_and_read_by_statHandler(t *testing.T) {
-//	var c safeCounter
-//	c.m = make(map[fbParams]int)
-//	req := httptest.NewRequest("POST", "/fizzbuzz", strings.NewReader(`{	"limit": 20,
-//	"int1": 2,
-//	"int2": 0,
-//	"string1": "Gregor",
-//	"string2": "Meow"
-//}`))
-//	rr := httptest.NewRecorder()
-//	handler := http.Handler(fbHandler{&c})
-//	handler.ServeHTTP(rr, req)
-//	//fmt.Println(rr)
-//	handler.ServeHTTP(rr, req)
-//	//fmt.Println(rr)
-//
-//	//handler.ServeHTTP(rr, req)
-//	req2 := httptest.NewRequest("GET", "/statistics", nil)
-//	rr2 := httptest.NewRecorder()
-//	statHandler := http.Handler(statHandler{&c})
-//	statHandler.ServeHTTP(rr2, req2)
-//	assert.Equal(t, http.StatusOK, rr2.Code)
-//	assert.JSONEq(t, `[
-//   {
-//       "parameters": {
-//           "limit": 20,
-//           "int1": 2,
-//           "int2": 0,
-//           "string1": "Gregor",
-//           "string2": "Meow"
-//       },
-//       "count": 3
-//   }
-//	]`, rr2.Body.String())
-//}
+func TestSafeCounter_increments_after_posting_to_fbHandler_and_read_by_statHandler(t *testing.T) {
+	var c safeCounter
+	c.m = make(map[fbParams]int)
+
+	// Make same request to /fizzbuzz 3 times (write to shared map in safeCounter)
+	rr := httptest.NewRecorder()
+	handler := http.Handler(fbHandler{&c})
+	req := httptest.NewRequest("POST", "/fizzbuzz", strings.NewReader(`{	"limit": 20,
+	"int1": 2,
+	"int2": 0,
+	"string1": "Gregor",
+	"string2": "Meow"
+}`))
+	handler.ServeHTTP(rr, req)
+	req = httptest.NewRequest("POST", "/fizzbuzz", strings.NewReader(`{	"limit": 20,
+	"int1": 2,
+	"int2": 0,
+	"string1": "Gregor",
+	"string2": "Meow"
+}`))
+	handler.ServeHTTP(rr, req)
+	req = httptest.NewRequest("POST", "/fizzbuzz", strings.NewReader(`{	"limit": 20,
+	"int1": 2,
+	"int2": 0,
+	"string1": "Gregor",
+	"string2": "Meow"
+}`))
+	handler.ServeHTTP(rr, req)
+
+	// Check that /statistics endpoint returns count for 3 requests (read from shared map in safeCounter)
+	req2 := httptest.NewRequest("GET", "/statistics", nil)
+	rr2 := httptest.NewRecorder()
+	statHandler := http.Handler(statHandler{&c})
+	statHandler.ServeHTTP(rr2, req2)
+	assert.Equal(t, http.StatusOK, rr2.Code)
+	assert.JSONEq(t, `[
+  {
+      "parameters": {
+          "limit": 20,
+          "int1": 2,
+          "int2": 0,
+          "string1": "Gregor",
+          "string2": "Meow"
+      },
+      "count": 3
+  }
+	]`, rr2.Body.String())
+}

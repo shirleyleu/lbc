@@ -4,6 +4,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -92,38 +93,22 @@ func TestStatHandler_ServeHTTP_one_request(t *testing.T) {
 	]`, rr.Body.String())
 }
 
-func TestStatHandler_ServeHTTP_multiple_requests_with_tied_counts(t *testing.T) {
+func TestHighestCount__when_two_are_tied_for_highest_returns_both(t *testing.T) {
 	var c safeCounter
-	c.m = map[fbParams]int{fbParams{Limit: 10, Int1: 1, Int2: 2, String1: "Gregor", String2: "Meow"}: 5,
+	c.m = map[fbParams]int{fbParams{Limit: 20, Int1: 1, Int2: 2, String1: "Gregor", String2: "Meow"}: 5,
 		fbParams{Limit: 10, Int1: 1, Int2: 2, String1: "Dustin", String2: "Moose"}: 5,
 		fbParams{Limit: 10, Int1: 1, Int2: 2, String1: "Moomie", String2: "Cow"}:   3}
-	req := httptest.NewRequest("GET", "/statistics", nil)
-	rr := httptest.NewRecorder()
-	handler := http.Handler(statHandler{&c})
-	handler.ServeHTTP(rr, req)
-	assert.Equal(t, http.StatusOK, rr.Code)
-	assert.JSONEq(t, `[
-    {
-        "parameters": {
-            "limit": 10,
-            "int1": 1,
-            "int2": 2,
-            "string1": "Gregor",
-            "string2": "Meow"
-        },
-        "count": 5
-    },
-	{
-        "parameters": {
-            "limit": 10,
-            "int1": 1,
-            "int2": 2,
-            "string1": "Dustin",
-            "string2": "Moose"
-        },
-        "count": 5
-    }
-	]`, rr.Body.String())
+
+	// Goal is to verify that the two elements with highest count of 5 are returned by the function highestCount
+	// In order to ignore random map order, resulting slice is ordered by the fbParams Limit
+	var slice []fbCount
+	slice = c.highestCount()
+	sort.Slice(slice, func(i, j int) bool {
+		return slice[i].Parameters.Limit > slice[j].Parameters.Limit
+	})
+
+	assert.Equal(t, []fbCount{{Parameters: fbParams{20, 1, 2, "Gregor", "Meow"}, Count: 5},
+		{Parameters: fbParams{10, 1, 2, "Dustin", "Moose"}, Count: 5}}, slice)
 }
 
 //func TestSafeCounter_increments_after_posting_to_fbHandler_and_read_by_statHandler(t *testing.T) {

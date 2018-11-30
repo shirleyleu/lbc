@@ -21,12 +21,7 @@ func (c *safeCounter) Inc(key fbParams) {
 }
 
 func (c *safeCounter) highestCount() []fbCount {
-	c.mux.Lock()
-	defer c.mux.Unlock()
-	var s []fbCount
-	for k, v := range c.m {
-		s = append(s, fbCount{k, v})
-	}
+	s := c.mapToSlice()
 	highestParamsCounts := []fbCount{}
 	count := 0
 	for _, v := range s {
@@ -40,6 +35,16 @@ func (c *safeCounter) highestCount() []fbCount {
 		}
 	}
 	return highestParamsCounts
+}
+
+func (c *safeCounter) mapToSlice() []fbCount {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+	var s []fbCount
+	for k, v := range c.m {
+		s = append(s, fbCount{k, v})
+	}
+	return s
 }
 
 type statHandler struct {

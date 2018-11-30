@@ -89,6 +89,11 @@ func (h fbHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Error parsing JSON: %s", err), http.StatusBadRequest)
 		return
 	}
+	// Protect against running out of memory while appending to slice
+	if p.Limit > 900000 {
+		http.Error(w, "Limit cannot be higher than 900000", http.StatusBadRequest)
+		return
+	}
 	// Construct fizzbuzz output and send back response as JSON
 	result, err := json.Marshal(fizzbuzz(p))
 	if err != nil {

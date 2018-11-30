@@ -93,6 +93,17 @@ func TestStatHandler_ServeHTTP_one_request(t *testing.T) {
 	]`, rr.Body.String())
 }
 
+func TestStatHandler_ServeHTTP_no_requests(t *testing.T) {
+	var c safeCounter
+	c.m = map[fbParams]int{}
+	req := httptest.NewRequest("GET", "/statistics", nil)
+	rr := httptest.NewRecorder()
+	handler := http.Handler(statHandler{&c})
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusNoContent, rr.Code)
+	assert.Equal(t, "", rr.Body.String())
+}
+
 func TestHighestCount__when_two_are_tied_for_highest_returns_both(t *testing.T) {
 	var c safeCounter
 	c.m = map[fbParams]int{fbParams{Limit: 20, Int1: 1, Int2: 2, String1: "Gregor", String2: "Meow"}: 5,
@@ -100,7 +111,7 @@ func TestHighestCount__when_two_are_tied_for_highest_returns_both(t *testing.T) 
 		fbParams{Limit: 10, Int1: 1, Int2: 2, String1: "Moomie", String2: "Cow"}:   3}
 
 	// Goal is to verify that the two elements with highest count of 5 are returned by the function highestCount
-	// In order to ignore random map order, resulting slice is ordered by the fbParams Limit
+	// In order to deal with random map order, resulting slice is ordered by the fbParams Limit
 	var slice []fbCount
 	slice = c.highestCount()
 	sort.Slice(slice, func(i, j int) bool {

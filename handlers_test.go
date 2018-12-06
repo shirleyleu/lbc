@@ -104,7 +104,7 @@ func TestStatHandler_ServeHTTP_no_requests(t *testing.T) {
 	assert.Equal(t, "", rr.Body.String())
 }
 
-func TestHighestCount__when_two_are_tied_for_highest_returns_both(t *testing.T) {
+func TestHighestCount_when_two_are_tied_for_highest_returns_both(t *testing.T) {
 	var c safeCounter
 	c.m = map[fbParams]int{fbParams{Limit: 20, Int1: 1, Int2: 2, String1: "Gregor", String2: "Meow"}: 5,
 		fbParams{Limit: 10, Int1: 1, Int2: 2, String1: "Dustin", String2: "Moose"}: 5,

@@ -20,31 +20,27 @@ func (c *safeCounter) Inc(key fbParams) {
 	c.m[key]++
 }
 
+type fbCount struct {
+	Parameters fbParams `json:"parameters"`
+	Count      int      `json:"count"`
+}
+
 func (c *safeCounter) highestCount() []fbCount {
-	s := c.mapToSlice()
-	highestParamsCounts := []fbCount{}
+	c.mux.Lock()
+	defer c.mux.Unlock()
+	var highestParamsCounts []fbCount
 	count := 0
-	for _, v := range s {
+	for k, v := range c.m {
 		switch {
-		case v.Count > count:
-			count = v.Count
-			highestParamsCounts = []fbCount{v}
-		case v.Count == count:
-			count = v.Count
-			highestParamsCounts = append(highestParamsCounts, v)
+		case v > count:
+			count = v
+			highestParamsCounts = []fbCount{{Parameters: k, Count: v}}
+		case v == count:
+			count = v
+			highestParamsCounts = append(highestParamsCounts, fbCount{Parameters: k, Count: v})
 		}
 	}
 	return highestParamsCounts
-}
-
-func (c *safeCounter) mapToSlice() []fbCount {
-	c.mux.Lock()
-	defer c.mux.Unlock()
-	var s []fbCount
-	for k, v := range c.m {
-		s = append(s, fbCount{k, v})
-	}
-	return s
 }
 
 type statHandler struct {
@@ -52,7 +48,7 @@ type statHandler struct {
 }
 
 func (h statHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Convert map to a slice and isolate the request(s) with the highest count
+	// Isolate the request(s) with the highest count
 	slice := h.c.highestCount()
 	// If no requests were made to fizzbuzz, return a http 204 No Content
 	if len(slice) == 0 {
@@ -73,17 +69,11 @@ func (h statHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type fbCount struct {
-	Parameters fbParams `json:"parameters"`
-	Count      int      `json:"count"`
-}
-
 type fbHandler struct {
 	c *safeCounter
 }
 
 func (h fbHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Interpret the request
 	j, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error reading request body: %s", err), http.StatusBadRequest)

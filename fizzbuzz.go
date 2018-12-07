@@ -17,7 +17,7 @@ func fizzbuzz(p fbParams) []string {
 	var s []string
 	for i := 1; i <= p.Limit; i++ {
 		switch {
-		// 0 is a valid integer and nothing is a multiple of 0
+		// 0 is a valid integer and the only multiple of 0 is itself
 		case p.Int1 != 0 && p.Int2 != 0 && i%(p.Int1*p.Int2) == 0:
 			s = append(s, p.String1+p.String2)
 		case p.Int1 != 0 && i%p.Int1 == 0:

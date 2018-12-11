@@ -14,23 +14,23 @@ type safeCounter struct {
 	mux sync.Mutex
 }
 
-func (c *safeCounter) Inc(key fbParams) {
+func (c *safeCounter) inc(key fbParams) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	c.m[key]++
 }
 
+// Convert map to a slice and isolate the request(s) with the highest count
 func (c *safeCounter) highestCount() []fbCount {
 	s := c.mapToSlice()
 	highestParamsCounts := []fbCount{}
-	count := 0
+	highestCount := 0
 	for _, v := range s {
 		switch {
-		case v.Count > count:
-			count = v.Count
+		case v.Count > highestCount:
+			highestCount = v.Count
 			highestParamsCounts = []fbCount{v}
-		case v.Count == count:
-			count = v.Count
+		case v.Count == highestCount:
 			highestParamsCounts = append(highestParamsCounts, v)
 		}
 	}
@@ -52,7 +52,6 @@ type statHandler struct {
 }
 
 func (h statHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Convert map to a slice and isolate the request(s) with the highest count
 	slice := h.c.highestCount()
 	// If no requests were made to fizzbuzz, return a http 204 No Content
 	if len(slice) == 0 {
@@ -112,5 +111,5 @@ func (h fbHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Store and count the successful requests
-	h.c.Inc(p)
+	h.c.inc(p)
 }
